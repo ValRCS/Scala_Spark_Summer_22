@@ -7,7 +7,7 @@ import scala.io.StdIn.readLine
 object Day17HelloSpark extends App {
   println(s"Testing Scala version: ${util.Properties.versionString}")
 
-  val spark = SparkSession.builder().appName("test").master("local").getOrCreate()
+  val spark = SparkSession.builder().appName("OldSparky").master("local").getOrCreate()
   //also session is a common name for the above spark object
   println(s"Session started on Spark version ${spark.version}")
 
@@ -43,9 +43,22 @@ object Day17HelloSpark extends App {
     .read
     .option("inferSchema", "true")
     .option("header", "true")
-    .csv("src/resources/flight-data/csv/2015-summary.csv")
+    .csv("src/resources/flight-data/csv/2015-summary.csv") //relative path to our project
+
+  println(s"We have ${flightData2015.count()} rows of data")
+
+  println(flightData2015.take(5).mkString(","))
+
+  //we can adjust spark configuration for better optimization
+  spark.conf.set("spark.sql.shuffle.partitions", "5") //default is 200
+
+  //sorting is a wide transformation (meaning data needs to be shuffled across multiple partitions)
+
+  println(flightData2015.sort("count").take(10).mkString(","))
+
+  //we can explain our queries - that is we let Spark tell us how it is going to peform the action
+  flightData2015.sort("count").explain()
 
   readLine("Enter anything to stop spark")
-
   spark.stop() //or .close() if you want to stop the Spark engine before the program stops running
 }
