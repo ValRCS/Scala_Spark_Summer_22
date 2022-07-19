@@ -7,6 +7,7 @@ import scala.io.StdIn.readLine
 object Day17HelloSpark extends App {
   println(s"Testing Scala version: ${util.Properties.versionString}")
 
+
   val spark = SparkSession.builder().appName("OldSparky").master("local").getOrCreate()
   //also session is a common name for the above spark object
   println(s"Session started on Spark version ${spark.version}")
