@@ -1,25 +1,35 @@
-<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
-<log4j:configuration debug="true" xmlns:log4j='http://jakarta.apache.org/log4j/'>
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="DEBUG">
+<!--    https://mkyong.com/logging/log4j2-xml-example/-->
+    <Appenders>
+        <Console name="LogToConsole" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
 
-    <appender name="console" class="org.apache.log4j.ConsoleAppender">
-        <param name="Target" value="System.out"/>
-        <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n" />
-        </layout>
-    </appender>
-
-    <appender name="fileAppender" class="org.apache.log4j.RollingFileAppender">
-        <param name="File" value="demoApplication.log"/>
-        <layout class="org.apache.log4j.PatternLayout">
-            <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n" />
-        </layout>
-    </appender>
-
-    <root>
-        <!--        <priority value ="INFO"></priority>-->
-        <priority value ="WARN"></priority>
-        <appender-ref ref="console"></appender-ref>
-        <appender-ref ref="fileAppender"></appender-ref>
-    </root>
-
-</log4j:configuration>
+        <File name="LogToFile" fileName="logs/app.log">
+            <PatternLayout>
+                <Pattern>%d %p %c{1.} [%t] %m%n</Pattern>
+            </PatternLayout>
+        </File>
+    </Appenders>
+    <Loggers>
+        <!-- avoid duplicated logs with additivity=false -->
+<!--        used by Logger.getLogger-->
+<!--        <Logger name="com.github.valrcs" level="debug" additivity="false">-->
+<!--        <Logger name="com.github.valrcs" level="info" additivity="false">-->
+<!--        <Logger name="com.github.valrcs" level="warn" additivity="false">-->
+<!--        <Logger name="com.github.valrcs" level="error" additivity="false">-->
+        <Logger name="com.github.valrcs" level="warn" additivity="false">
+            <AppenderRef ref="LogToFile"/>
+            <AppenderRef ref="LogToConsole"/>
+        </Logger>
+<!--        //Used By Spark-->
+<!--        <Root  level="info">-->
+<!--        <Root  level="debug">-->
+        <Root  level="warn">
+<!--            You can comment out those AppenderRefs that you do not want to use-->
+            <AppenderRef ref="LogToFile"/>
+            <AppenderRef ref="LogToConsole"/>
+        </Root>
+    </Loggers>
+</Configuration>
