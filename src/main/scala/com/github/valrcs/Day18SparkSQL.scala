@@ -1,6 +1,6 @@
 package com.github.valrcs
 
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{SparkSession, functions}
 
 object Day18SparkSQL extends App {
   println(s"Reading CSVs with Scala version: ${util.Properties.versionNumberString}")
@@ -30,12 +30,15 @@ object Day18SparkSQL extends App {
       GROUP BY DEST_COUNTRY_NAME
       """)
 
-  //this is the other approach
+  //this is the other approach using methods built into DataFrame
   val dataFrameWay = flightData2015.groupBy("DEST_COUNTRY_NAME").count()
 
   sqlWay.show(10)
 
   dataFrameWay.show(10)
+
+  sqlWay.explain()
+  dataFrameWay.explain()
 
   //TODO set up logging  log4j2.xml config file
   //TODO set level to warning for both file and console
@@ -46,6 +49,26 @@ object Day18SparkSQL extends App {
   //TODO show top 10 flights
 
   //you can also show the dataFrameWay as well but we have not looked at that in detail
+  val flightData2014 = spark
+    .read
+    .option("inferSchema", "true")
+    .option("header", "true")
+    .csv("src/resources/flight-data/csv/2014-summary.csv")
+  //TODO create SQL view
 
+  flightData2014.createOrReplaceTempView("flight_data_2014")
+  //TODO ORDER BY flight counts
+  val sqlFly = spark.sql("""
+      SELECT DEST_COUNTRY_NAME, SUM(count) as flight
+      FROM flight_data_2014
+      GROUP BY DEST_COUNTRY_NAME
+      ORDER BY flight DESC
+      """)
+  //TODO show top 10 flights
+  sqlFly.show(10)
+
+  //again two approaches to do the same thing
+  spark.sql("SELECT max(count) from flight_data_2015").show() //show everything in this case just 1 row
+  flightData2015.select(functions.max("count")).show()
 
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--<Configuration status="DEBUG">-->
+<!--actual level of debugging for log4j2 itself-->
 <Configuration status="warn">
 <!--    https://mkyong.com/logging/log4j2-xml-example/-->
     <Appenders>
