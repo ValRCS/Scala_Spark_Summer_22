@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="DEBUG">
+<!--<Configuration status="DEBUG">-->
+<Configuration status="warn">
 <!--    https://mkyong.com/logging/log4j2-xml-example/-->
     <Appenders>
         <Console name="LogToConsole" target="SYSTEM_OUT">
