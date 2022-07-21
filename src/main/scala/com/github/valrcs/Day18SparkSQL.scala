@@ -1,6 +1,14 @@
 package com.github.valrcs
 
-import org.apache.spark.sql.{SparkSession, functions}
+import org.apache.spark.sql.functions.{desc, max}
+//import org.apache.spark.sql.functions. //lot of functions you probably do not want to import all of them
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Encoder, Encoders}
+
+// in Scala
+case class Flight(DEST_COUNTRY_NAME: String,
+                  ORIGIN_COUNTRY_NAME: String,
+                  count: BigInt)
 
 object Day18SparkSQL extends App {
   println(s"Reading CSVs with Scala version: ${util.Properties.versionNumberString}")
@@ -69,6 +77,61 @@ object Day18SparkSQL extends App {
 
   //again two approaches to do the same thing
   spark.sql("SELECT max(count) from flight_data_2015").show() //show everything in this case just 1 row
-  flightData2015.select(functions.max("count")).show()
+  flightData2015.select(max("count")).show() //intellij feels that functions.max would be less confusing
 
+
+  //very similar to the exercise except we use limit 5 here
+  val maxSql = spark.sql("""
+      SELECT DEST_COUNTRY_NAME, sum(count) as destination_total
+      FROM flight_data_2015
+      GROUP BY DEST_COUNTRY_NAME
+      ORDER BY sum(count) DESC
+      LIMIT 5
+      """)
+  maxSql.show()
+
+  //Now, let’s move to the DataFrame syntax that is semantically similar but slightly different in
+  //implementation and ordering
+  flightData2015
+    .groupBy("DEST_COUNTRY_NAME")
+    .sum("count")
+    .withColumnRenamed("sum(count)", "destination_total")
+    .sort(desc("destination_total"))
+    .limit(5)
+    .show()
+
+  //results and execution should be the same we can always check with explain() instead of show()
+
+  //we do not have to print the results we can save to many different formats
+  //here is an example we will use later on
+  //FIXME ERROR org.apache.spark.sql.execution.datasources.FileFormatWriter - Aborting job 11a3f18a-9d05-4a9e-8a0d-91134d4c7b9c.
+  //java.lang.UnsatisfiedLinkError: 'boolean org.apache.hadoop.io.nativeio.NativeIO$Windows.access0(java.lang.String, int)'
+  //	at org.apache.hadoop.io.nativeio.NativeIO$Windows.access0(Native Method) ~[hadoop-client-api-3.3.2.jar:?]
+//  flightData2015
+//    .groupBy("DEST_COUNTRY_NAME")
+//    .sum("count")
+//    .withColumnRenamed("sum(count)", "destination_total")
+//    .sort(desc("destination_total"))
+//    .toDF()
+//    .write
+//    .format("csv")
+//    .mode("overwrite")
+////    .option("sep","\t")
+//    .save("src/resources/flight-data/csv/top_destinations_2015.csv")
+
+
+//  val flightsDF = spark.read
+//    .parquet("src/resources/flight-data/parquet/2010-summary.parquet/")
+
+  //one of those dark corners of Scala called implicits, which is a bit magical
+
+//  implicit val enc: Encoder[Flight] = Encoders.product[Flight]
+//  //we needed the above line so the below type conversion works
+//  val flights = flightsDF.as[Flight]
+//  val flightsArray = flights.collect() //now we have local storage of our Flights
+//  //now we can use regular Scala methods
+//  println(s"We have information on ${flightsArray.length} flights")
+//  val sortedFlights = flightsArray.sortBy(_.count)
+//  println(sortedFlights.take(5).mkString("\n"))
+//
 }
