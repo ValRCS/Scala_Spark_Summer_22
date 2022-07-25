@@ -2,6 +2,7 @@ package com.github.valrcs
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{StructField, StructType, StringType, LongType }
+import org.apache.spark.sql.functions.{expr, col, column}
 
 object Day21RowsDataFrameTransformations extends App {
   println("Chapter 5. Basic Structured Operations - Rows, DataFrame Transformations ")
@@ -82,5 +83,76 @@ object Day21RowsDataFrameTransformations extends App {
   //this requires implicits which are slowly going away in future versions
 //  val alsoDF = Seq(("Hello", 2, 1L)).toDF("col1", "col2", "col3")
 
+  //let’s take a look at their most useful methods that
+  //you’re going to be using: the select method when you’re working with columns or expressions,
+  //and the selectExpr method when you’re working with expressions in strings. Naturally some
+  //transformations are not specified as methods on columns; therefore, there exists a group of
+  //functions found in the org.apache.spark.sql.functions package.
+  //With these three tools, you should be able to solve the vast majority of transformation challenges
+  //that you might encounter in DataFrames.
+
+  //select and selectExpr
+  //select and selectExpr allow you to do the DataFrame equivalent of SQL queries on a table of
+  //data:
+
+  //In the simplest possible terms, you can use them to manipulate columns in your DataFrames.
+
+  // in Scala
+  df.select("DEST_COUNTRY_NAME").show(2)
+
+  //You can select multiple columns by using the same style of query, just add more column name
+  //strings to your select method call
+
+  val newDF = df.select("DEST_COUNTRY_NAME", "ORIGIN_COUNTRY_NAME")
+  //again newDF is not holding the data in memory of our application
+  newDF.show(3)
+
+  println("Same thing using SQL syntax")
+  //with SQL syntax it is a bit harder to debug errors / typos etc
+  val sqlWay = spark.sql("""
+      SELECT DEST_COUNTRY_NAME, ORIGIN_COUNTRY_NAME as my_ORIGIN
+      FROM dfTable
+      LIMIT 10
+      """)
+  sqlWay.show(3)
+
+ //you can refer to columns in a number of different
+  //ways; all you need to keep in mind is that you can use them interchangeably
+  //try to stick with just one type in a single project
+  df.select(
+    df.col("DEST_COUNTRY_NAME"),
+    col("DEST_COUNTRY_NAME"),
+    column("DEST_COUNTRY_NAME"),
+//    'DEST_COUNTRY_NAME, //not used as much required implicits which are being depreceated
+//    $"DEST_COUNTRY_NAME",
+    expr("DEST_COUNTRY_NAME")) //expression lets us do more transformations than col or column
+    .show(2)
+
+  //One common error is attempting to mix Column objects and strings. For example, the following
+  //code will result in a compiler error:
+  //df.select(col("DEST_COUNTRY_NAME"), "DEST_COUNTRY_NAME")
+
+  //expr is the most flexible reference that we can use. It can refer to a plain
+  //column or a string manipulation of a column. To illustrate, let’s change the column name, and
+  //then change it back by using the AS keyword and then the alias method on the column:
+
+  // in Scala
+  df.select(expr("DEST_COUNTRY_NAME AS destination")).show(2)
+
+  //we can us alias instead to change the column name
+  // in Scala
+  df.select(expr("DEST_COUNTRY_NAME as destination").alias("my destination"))
+    .show(2)
+
+
+  //TODO create 3 Rows with the following data formats, string - holding food name, int - for holding quantity, long for holding price
+  //also boolean for holding isIt Vegan or not - so 4 data cells in each row
+  // you will need to manually create a Schema - column names thus will be food, qty, price, isVegan
+  // you  might need to import an extra type or two import org.apache.spark.sql.types.{StructField, StructType, StringType, LongType }
+  //TODO create a dataFrame called foodFrame which will hold those Rows
+  //Use Select or/an SQL syntax to select and show only name and qty
+
+  //so 3 Rows of food each Row has 4 entries (columns) so original data could be something like Chocolate, 3, 2.49, false
+  //in Schema , name, qty, price are required (not nullable) while isVegan could be null
 }
 
