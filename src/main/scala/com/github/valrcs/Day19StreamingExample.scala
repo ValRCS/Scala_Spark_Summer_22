@@ -41,15 +41,15 @@ object Day19StreamingExample extends App {
   println(s"We got ${staticDataFrame.count()} rows of data!") //remember count action goes across all partitions
 
 //  //batch query
-//  staticDataFrame
-//    .selectExpr(
-//      "CustomerId",
-//      "(UnitPrice * Quantity) as total_cost",
-//      "InvoiceDate")
-//    .groupBy(
-//      col("CustomerId"), window(col("InvoiceDate"), "1 day"))
-//    .sum("total_cost")
-//    .show(5)
+  staticDataFrame
+    .selectExpr(
+      "CustomerId",
+      "(UnitPrice * Quantity) as total_cost",
+      "InvoiceDate")
+    .groupBy(
+      col("CustomerId"), window(col("InvoiceDate"), "1 day"))
+    .sum("total_cost")
+    .show(5)
 //
 //  //Now that we’ve seen how that works, let’s take a look at the streaming code! You’ll notice that
 //  //very little actually changes about the code. The biggest change is that we used readStream
@@ -57,28 +57,35 @@ object Day19StreamingExample extends App {
 //  //the number of files we should read in at once. This is to make our demonstration more
 //  //“streaming,” and in a production scenario this would probably be omitted.
 //
-//  val streamingDataFrame = spark.readStream
-//    .schema(staticSchema) //we provide the schema that we got from our static read
-//    .option("maxFilesPerTrigger", 1)
-//    .format("csv")
-//    .option("header", "true")
-////    .load("src/resources/retail-data/by-day/*.csv")
+  val streamingDataFrame = spark.readStream
+    .schema(staticSchema) //we provide the schema that we got from our static read
+    .option("maxFilesPerTrigger", 1)
+    .format("csv")
+    .option("header", "true")
+    .load("src/resources/retail-data/by-day/*.csv")
+
+  //double check if the stream is working
+  println(s"Spark is streaming: ${streamingDataFrame.isStreaming}" )
+
+  //FIXME streaming works but writing queries to in-memory throws exception
+  //TODO investigate if simpler queries do not throw this error
+
 //    .load("src/resources/retail-data/by-day/2010-12-01.csv")
 //
 //  //lazy operation This is still a lazy operation, so we will need to call a streaming action to start the execution of
 //  //this data flow.
 //  // in Scala
-//  val purchaseByCustomerPerHour = streamingDataFrame
-//    .selectExpr(
-//      "CustomerId",
-//      "(UnitPrice * Quantity) as total_cost",
-//      "InvoiceDate")
+  val purchaseByCustomerPerHour = streamingDataFrame
+    .selectExpr(
+      "CustomerId",
+      "(UnitPrice * Quantity) as total_cost",
+      "InvoiceDate")
+    .groupBy(
+      col("CustomerId"), window(col("InvoiceDate"), "1 day"))
 //    .groupBy(
-//      col("CustomerId"), window(col("InvoiceDate"), "1 day"))
-////    .groupBy(
-////      col("CustomerId"), window(col("CustomerId"), "1 day"))
-//    .sum("total_cost")
-//
+//      col("CustomerId"), window(col("CustomerId"), "1 day"))
+    .sum("total_cost")
+////
 //  //Streaming actions are a bit different from our conventional static action because we’re going to
 //  //be populating data somewhere instead of just calling something like count (which doesn’t make
 //  //any sense on a stream anyways). The action we will use will output to an in-memory table that
@@ -86,13 +93,13 @@ object Day19StreamingExample extends App {
 //  //option that we set). Spark will mutate the data in the in-memory table such that we will always
 //  //have the highest value as specified in our previous aggregation
 //
-//  purchaseByCustomerPerHour.writeStream
-//    .format("memory") // memory = store in-memory table
-//    .queryName("customer_purchases") // the name of the in-memory table
-//    .outputMode("complete") // complete = all the counts should be in the table
-//    .start()
-//
-//  // in Scala
+  purchaseByCustomerPerHour.writeStream
+    .format("memory") // memory = store in-memory table
+    .queryName("customer_purchases") // the name of the in-memory table
+    .outputMode("complete") // complete = all the counts should be in the table
+    .start()
+////
+////  // in Scala
 //  spark.sql("""
 //      SELECT *
 //      FROM customer_purchases
