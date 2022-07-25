@@ -75,4 +75,15 @@ object Day20StructuredAPIOverview extends App {
   //TODO Show all 31 numbers
   //TODO Create another dataframe with numbers from 100 to 3100
   //TODO show last 5 numbers
+  //TODO create a DataFrame with a single column called JulyNumbers from 1 to 31
+  val dataFrame = spark.range(1,31+1).toDF("JulyNumber")
+
+  //TODO Show all 31 numbers
+  dataFrame.show(31)
+  //TODO Create another dataframe with numbers from 100 to 3100
+  val anotherDataFrame = spark.range(100,3100+1).toDF().collect()
+  //TODO show last 5 numbers
+  anotherDataFrame.reverse.take(5).foreach(println)
+  val df100to3100 = dataFrame.select(dataFrame.col("JulyNumber") * 100) //we could make the formula more complicated
+  df100to3100.collect().reverse.take(5).foreach(println)
 }
