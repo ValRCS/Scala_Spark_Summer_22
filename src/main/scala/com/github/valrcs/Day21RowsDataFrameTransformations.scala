@@ -173,5 +173,7 @@ object Day21RowsDataFrameTransformations extends App {
   val foodFrame = spark.createDataFrame(foodRDD, foodSchema)
 
   foodFrame.select(col("food"), col("qty")).show()
+
+
 }
 
