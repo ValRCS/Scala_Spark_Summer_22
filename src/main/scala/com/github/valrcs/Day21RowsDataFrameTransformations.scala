@@ -1,7 +1,8 @@
 package com.github.valrcs
 
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{StructField, StructType, StringType, LongType }
+//import org.apache.spark.sql.types.{StructField, StructType, StringType, LongType }
+import org.apache.spark.sql.types.{BooleanType, DoubleType, IntegerType, LongType, StringType, StructField, StructType}
 import org.apache.spark.sql.functions.{expr, col, column}
 
 object Day21RowsDataFrameTransformations extends App {
@@ -154,5 +155,23 @@ object Day21RowsDataFrameTransformations extends App {
 
   //so 3 Rows of food each Row has 4 entries (columns) so original data could be something like Chocolate, 3, 2.49, false
   //in Schema , name, qty, price are required (not nullable) while isVegan could be null
+
+  val foodSchema = new StructType(Array(
+    StructField("food", StringType, false), //so true refers to this field/column being nullable namely could have null
+    StructField("qty", IntegerType, false),
+    StructField("price", DoubleType, false),
+    StructField("isVegan", BooleanType, true))) //so names have to be present it is not nullable - ie required
+
+  val foodRows = Seq(
+    Row("Cottage cheese", 1, 3.49, false), //we need to specify 1L because 1 by itself is an integer
+    Row("Sourdough bread", 2, 4.99, true),
+    Row("Dumplings", 10, 1.89, null),
+    Row("Smoked salmon", 2, 5.69, false)
+  )
+
+  val foodRDD = spark.sparkContext.parallelize(foodRows) //you could add multiple partitions(numSlices) here which is silly when you only have 4 rows o data
+  val foodFrame = spark.createDataFrame(foodRDD, foodSchema)
+
+  foodFrame.select(col("food"), col("qty")).show()
 }
 
