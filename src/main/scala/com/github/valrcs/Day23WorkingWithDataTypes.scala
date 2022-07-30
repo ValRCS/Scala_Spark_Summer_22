@@ -1,6 +1,7 @@
 package com.github.valrcs
 
-import org.apache.spark.sql.functions.{bround, col, corr, expr, lit, not, pow, round, mean, max}
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions.{bround, col, corr, expr, lit, max, mean, not, pow, round}
 
 object Day23WorkingWithDataTypes extends App {
   println("Ch6: Working with Different Types\nof Data - Part 2")
@@ -186,7 +187,25 @@ object Day23WorkingWithDataTypes extends App {
   //so the median price is aproximately 2.51
 
   //TODO mini task check what happens if you change relError to 0.01
+  //so default is quartile (4 cut points)
+  def getQuantiles(df: DataFrame, colName:String, quantileProbs:Array[Double]=Array(0.25,0.5,0.75,0.99), relError:Double=0.05):Array[Double] = {
+    df.stat.approxQuantile(colName, quantileProbs, relError)
+  }
 
+  def printQuantiles(df: DataFrame, colName:String, quantileProbs:Array[Double]=Array(0.25,0.5,0.75,0.99), relError:Double=0.05): Unit = {
+    val quantiles = getQuantiles(df, colName, quantileProbs, relError)
+    println(s"For column $colName")
+    for ((prob, cutPoint) <- quantileProbs zip quantiles) {
+      println(s"Quantile ${prob} so aprox ${Math.round(prob*100)}% of data is covered - cutPoint ${cutPoint}")
+    }
+  }
+
+  val deciles = (1 to 10).map(n => n.toDouble/10).toArray
+  printQuantiles(df, "UnitPrice", deciles)
+
+  //ventiles 20-quantiles
+  val ventiles = (1 to 20).map(n => n.toDouble/20).toArray
+  printQuantiles(df, "UnitPrice", ventiles)
 
 
 }
