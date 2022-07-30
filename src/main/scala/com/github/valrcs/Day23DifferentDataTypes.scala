@@ -1,6 +1,6 @@
 package com.github.valrcs
 
-import org.apache.spark.sql.functions.{col, lit}
+import org.apache.spark.sql.functions.{col, desc, lit}
 
 object Day23DifferentDataTypes extends App {
  //Documentation for Dataset (which applies to DataFrames as well) methods and properties
@@ -80,5 +80,32 @@ object Day23DifferentDataTypes extends App {
   //print these 20 Rows
 
   //You can use either SQL or Spark or mis of syntax
+  val filePath1 = "src/resources/retail-data/by-day/2011-03-01.csv"
+  val df2011 = spark.read.format("csv")
+    .option("header", "true")
+    .option("inferSchema", "true") //we let Spark determine schema
+    .load(filePath1)
+
+  df2011.createOrReplaceTempView("dfTable2011")
+
+  println("All purchases made from Finland:")
+  df2011.where(col("Country") === "Finland").show()
+
+  //TODO collect results into an Array of Rows
+  val arr2011Finland=df2011.where(col("Country").equalTo("Finland"))
+    .orderBy(desc("UnitPrice")) //asc - for ascending also would be possible
+    .limit(20).collect()
+
+  arr2011Finland.take(5).foreach(println)
+
+  println("SQL way")
+
+  val finland2011 = spark.sql("SELECT * FROM dfTable2011 " +
+    "WHERE country = 'Finland' " +
+    "ORDER BY unitPrice DESC " +
+    "LIMIT 20").collect() //we force this dataFrame into an Array of Rows - so local
+
+  finland2011.take(5).foreach(println)
+
 
 }
