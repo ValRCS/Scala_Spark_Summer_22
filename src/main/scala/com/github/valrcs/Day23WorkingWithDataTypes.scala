@@ -1,6 +1,6 @@
 package com.github.valrcs
 
-import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.{bround, col, corr, expr, lit, not, pow, round, mean, max}
 
 object Day23WorkingWithDataTypes extends App {
   println("Ch6: Working with Different Types\nof Data - Part 2")
@@ -59,5 +59,136 @@ object Day23WorkingWithDataTypes extends App {
     .select("unitPrice", "isExpensive") //we only show specific columns
     .show(5)
 
+  //If you’re coming from a SQL background, all of these statements should seem quite familiar.
+  //Indeed, all of them can be expressed as a where clause. In fact, it’s often easier to just express
+  //filters as SQL statements than using the programmatic DataFrame interface and Spark SQL
+  //allows us to do this without paying any performance penalty. For example, the following two
+  //statements are equivalent:
+
+  df.withColumn("isExpensive", not(col("UnitPrice").leq(250))) //not really needed here
+    .filter("isExpensive")
+    .select("Description", "UnitPrice").show(5)
+
+  df.withColumn("isExpensive", expr("NOT UnitPrice <= 250"))
+    .filter("isExpensive")
+    .select("Description", "UnitPrice").show(5)
+
+  //personally I would prefer this shorter version :)
+  df.withColumn("isExpensive", col("UnitPrice") > 250)
+    .filter("isExpensive")
+    .select("Description", "UnitPrice").show(5)
+
+  //WARNING
+  //One “gotcha” that can come up is if you’re working with null data when creating Boolean expressions.
+  //If there is a null in your data, you’ll need to treat things a bit differently. Here’s how you can ensure
+  //that you perform a null-safe equivalence test:
+
+  //so if Description might have null / does not exist then we would need to use this eqNullSafe method
+  //no alias for this method?
+  df.where(col("Description").eqNullSafe("hello")).show()
+
+  //Working with Numbers
+  //When working with big data, the second most common task you will do after filtering things is
+  //counting things. For the most part, we simply need to express our computation, and that should
+  //be valid assuming that we’re working with numerical data types.
+  //To fabricate a contrived example, let’s imagine that we found out that we mis-recorded the
+  //quantity in our retail dataset and the true quantity is equal to square of (the current quantity * the unit
+  //price) + 5. This will introduce our first numerical function as well as the pow function that raises
+  //a column to the expressed power
+
+  val fabricatedQuantity = pow(col("Quantity") * col("UnitPrice"), 2) + 5
+  df.select(col("CustomerId"),
+    col("Quantity"),
+    col("UnitPrice"),
+    fabricatedQuantity.alias("realQuantity"))
+    .show(3)
+
+  //Notice that we were able to multiply our columns together because they were both numerical.
+  //Naturally we can add and subtract as necessary, as well. In fact, we can do all of this as a SQL
+  //expression, as well
+
+  df.selectExpr(
+    "CustomerId", //remember in selectExpr we can select columns and do some work on them at the same tiime
+    "Quantity as oldQuant",
+    "UnitPrice",
+    "(POWER((Quantity * UnitPrice), 2.0) + 5) as realQuantity")
+    .show(2)
+
+  //we can use any of the SQL functions available at
+  //https://spark.apache.org/docs/2.3.0/api/sql/index.html
+
+  df.selectExpr(
+    "CustomerId", //remember in selectExpr we can select columns and do some work on them at the same tiime
+    "Quantity as oldQuant",
+    "UnitPrice",
+    "ROUND((POWER((Quantity * UnitPrice), 2.0) + 5), 2) as realQuantity") //so round to 2 digits after comma
+    .show(4)
+
+  df.select(round(col("UnitPrice"), 1).alias("rounded"), col("UnitPrice")).show(5)
+
+  //By default, the round function rounds up if you’re exactly in between two numbers. You can
+  //round down by using the bround
+
+  // in Scala
+
+  df.select(round(lit("2.6")), bround(lit("2.6"))).show(2)
+
+  //only difference is at the middle
+  df.select(round(lit("2.5")), bround(lit("2.5"))).show(2)
+
+  df.select(round(lit("2.4")), bround(lit("2.4"))).show(2)
+
+  //https://en.wikipedia.org/wiki/Pearson_correlation_coefficient
+  //Another numerical task is to compute the correlation of two columns. For example, we can see
+  //the Pearson correlation coefficient for two columns to see if cheaper things are typically bought
+  //in greater quantities. We can do this through a function as well as through the DataFrame
+  //statistic methods
+
+  //so we are answering a question
+  //whether when units get more expensive do we buy more or less or is it pretty random
+  //so max inverse correlation would be -1, no correlation would be 0 and positive correlation would be 1(max)
+
+  val corrCoefficient = df.stat.corr("Quantity", "UnitPrice") //you can save this single double value as well
+  println(s"Pearson correlations coefficient for Quantity and UnitPrice is $corrCoefficient")
+  df.select(corr("Quantity", "UnitPrice")).show()
+
+  //so -0.04 that means that Quantity and UnitPrice are not correlated, just a tiny negative correlation
+
+  //Another common task is to compute summary statistics for a column or set of columns. We can
+  //use the describe method to achieve exactly this. This will take all numeric columns and
+  //calculate the count, mean, standard deviation, min, and max. You should use this primarily for
+  //viewing in the console because the schema might change in the future:
+
+  // in Scala
+  df.describe().show()
+
+
+//  If you need these exact numbers, you can also perform this as an aggregation yourself by
+//    importing the functions and applying them to the columns that you need:
+  //import org.apache.spark.sql.functions.{count, mean, stddev_pop, min, max}
+
+  df.select(mean("Quantity"), mean("UnitPrice"), max("UnitPrice")).show()
+
+  //There are a number of statistical functions available in the StatFunctions Package (accessible
+  //using stat as we see in the code block below). These are DataFrame methods that you can use
+  //to calculate a variety of different things. For instance, you can calculate either exact or
+  //approximate quantiles of your data using the approxQuantile method
+
+  val colName = "UnitPrice"
+  val quantileProbs = Array(0.1, 0.4, 0.5,0.6, 0.9, 0.99) //checking different quantiles
+  val relError = 0.05
+  val quantilePrices = df.stat.approxQuantile("UnitPrice", quantileProbs, relError) // 2.51
+
+  for ((prob, price) <- quantileProbs zip quantilePrices) {
+    println(s"Quantile ${prob} - price ${price}")
+  }
+
+  //so the median price is aproximately 2.51
+
+  //TODO mini task check what happens if you change relError to 0.01
+
+
 
 }
+
+
