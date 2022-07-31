@@ -1,7 +1,8 @@
 package com.github.valrcs
 
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{bround, col, corr, expr, lit, max, mean, not, pow, round}
+import org.apache.spark.sql.expressions.Window
+import org.apache.spark.sql.functions.{bround, col, corr, countDistinct, expr, lit, max, mean, monotonically_increasing_id, not, ntile, pow, round}
 
 object Day23WorkingWithDataTypes extends App {
   println("Ch6: Working with Different Types\nof Data - Part 2")
@@ -206,6 +207,45 @@ object Day23WorkingWithDataTypes extends App {
   //ventiles 20-quantiles
   val ventiles = (1 to 20).map(n => n.toDouble/20).toArray
   printQuantiles(df, "UnitPrice", ventiles)
+
+ //You also can use this to see a cross-tabulation or frequent item pairs (be careful, this output will
+  //be large and is omitted for this reason):
+  //https://en.wikipedia.org/wiki/Contingency_table
+ // df.stat.crosstab("StockCode", "Quantity").show()
+
+
+
+  //we might want to have some distinct counts for ALL columns
+  //https://stackoverflow.com/questions/40888946/spark-dataframe-count-distinct-values-of-every-column
+
+  df.groupBy("Country").count().show()
+  df.agg(countDistinct("Country")).show()
+
+  for (col <- df.columns) {
+//    val count = df.agg(countDistinct(col))
+    //this would get you breakdown by distinct value
+//    val count = df.groupBy(col).count().collect()
+    val count = df.groupBy(col).count().count() //so first Countis aggregation second count is row count in our results
+    println(s"Column $col has $count distinct values")
+  }
+
+  //so here crostab would be huge here we could do something like
+  //quantile breakdown by country :)
+  //so first we would need to get quantile rank for each row
+//  val windowSpec  = Window.partitionBy("UnitPrice").orderBy("UnitPrice")
+  //here we do not need to partition we want rank over ALL of the rows
+  val windowSpec  = Window.partitionBy().orderBy("UnitPrice") //TODO check if window applies to whole DF
+  //in chapter 7
+
+  df.select(col("Description"), col("UnitPrice"),
+    ntile(4).over(windowSpec).alias("quantile_rank") //we are trying to get rank 1 to 4 for each row
+  ).show()
+  //TODO double check syntax for quartile ranking
+
+  //As a last note, we can also add a unique ID to each row by using the function
+  //monotonically_increasing_id. This function generates a unique value for each row, starting
+  //with 0:
+  df.select(monotonically_increasing_id()).show(5)
 
 
 }
