@@ -1,6 +1,6 @@
 package com.github.valrcs
 
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object SparkUtil {
   /**
@@ -17,5 +17,28 @@ object SparkUtil {
     sparkSession.conf.set("spark.sql.shuffle.partitions", partitionCount)
     if (verbose) println(s"Session started on Spark version ${sparkSession.version} with ${partitionCount} partitions")
     sparkSession
+  }
+
+  //TODO write scalaDoc
+  def readCSVWithView(spark:SparkSession,
+                      filePath:String,
+                      source:String="csv",
+                      viewName:String="dfTable",
+                      header:Boolean=true,
+                      inferSchema:Boolean=true,
+                      printSchema:Boolean =true) :DataFrame = {
+
+    val df = spark.read.format(source)
+      .option("header", header.toString) //Spark wants string here since option is generic
+      .option("inferSchema", inferSchema.toString) //we let Spark determine schema
+      .load(filePath)
+    //so if you pass only whitespace or nothing to view we will not create it
+    //so if viewName is NOT blank
+    if (!viewName.isBlank) {
+      df.createOrReplaceTempView(viewName)
+      println(s"Created Temporary View for SQL queries called: $viewName")
+    }
+    if (printSchema) df.printSchema()
+    df
   }
 }
