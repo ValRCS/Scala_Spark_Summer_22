@@ -20,13 +20,13 @@ object SparkUtil {
   }
 
   //TODO write scalaDoc
-  def readCSVWithView(spark:SparkSession,
-                      filePath:String,
-                      source:String="csv",
-                      viewName:String="dfTable",
-                      header:Boolean=true,
-                      inferSchema:Boolean=true,
-                      printSchema:Boolean =true) :DataFrame = {
+  def readDataWithView(spark:SparkSession,
+                       filePath:String,
+                       source:String="csv",
+                       viewName:String="dfTable",
+                       header:Boolean=true,
+                       inferSchema:Boolean=true,
+                       printSchema:Boolean =true) :DataFrame = {
 
     val df = spark.read.format(source)
       .option("header", header.toString) //Spark wants string here since option is generic

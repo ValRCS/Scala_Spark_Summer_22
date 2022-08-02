@@ -1,6 +1,6 @@
 package com.github.valrcs
 
-import SparkUtil.{getSpark, readCSVWithView}
+import SparkUtil.{getSpark, readDataWithView}
 import org.apache.spark.sql.functions.{col, expr, lpad, regexp_extract, regexp_replace, rpad, translate}
 
 object Day24Exercise extends App {
@@ -11,7 +11,7 @@ object Day24Exercise extends App {
 
   val filePath = "src/resources/retail-data/by-day/2011-03-01.csv"
 
-  val df = readCSVWithView(spark, filePath)
+  val df = readDataWithView(spark, filePath)
 
   //Select Capitalized Description Column
   //Select Padded country column with _ on both sides with 30 characters for country name total allowed

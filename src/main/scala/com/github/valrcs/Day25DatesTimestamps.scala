@@ -1,6 +1,6 @@
 package com.github.valrcs
 
-import com.github.valrcs.SparkUtil.{getSpark, readCSVWithView}
+import com.github.valrcs.SparkUtil.{getSpark, readDataWithView}
 import org.apache.spark.sql.functions.{col, current_date, current_timestamp, date_add, date_sub, datediff, lit, months_between, to_date, to_timestamp}
 
 object Day25DatesTimestamps extends App {
@@ -9,7 +9,7 @@ object Day25DatesTimestamps extends App {
 
   val filePath = "src/resources/retail-data/by-day/2010-12-01.csv"
 
-  val df = readCSVWithView(spark, filePath)
+  val df = readDataWithView(spark, filePath)
 
   //Working with Dates and Timestamps
   //Dates and times are a constant challenge in programming languages and databases. It’s always
