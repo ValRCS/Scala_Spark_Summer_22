@@ -69,9 +69,22 @@ object Day26JSONData extends App {
   val dfParsedJson =   df.selectExpr("*", "(InvoiceNo, Description) as myStruct")
     .withColumn("newJSON", to_json(col("myStruct")))
     .withColumn("fromJSON", from_json(col("newJSON"), parseSchema ))
+    //now we extract value of Description key directly from our JSON string
+    .withColumn("DescFromJson", get_json_object(col("newJSON"), "$.Description"))
 
   dfParsedJson.printSchema()
   dfParsedJson.show(5, false)
 
+  val jsPath = "src/resources/flight-data/json/2010-summary.json"
+
+//  //lets try reading json as a text
+//  val jsDF = spark.read.format("txt")
+////    .option("header", header.toString) //Spark wants string here since option is generic
+////    .option("inferSchema", inferSchema.toString) //we let Spark determine schema
+//    .load(jsPath)
+//
+//  jsDF.printSchema()
+
+//  jsDF.show(3, false)
 
 }

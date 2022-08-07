@@ -47,4 +47,6 @@ object Day26ExerciseArrays extends App {
     .orderBy(asc("Array_length")) // i want to see the least words first
   .show(25, false)
 
+
+
 }
