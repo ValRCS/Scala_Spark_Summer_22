@@ -48,14 +48,19 @@ object Day30Joins extends App {
     (0, "Bill Chambers", 0, Seq(100)),
     (1, "Matei Zaharia", 1, Seq(500, 250, 100)),
     (2, "Michael Armbrust", 1, Seq(250, 100)),
-    (3, "Valdis Saulespurens", 2, Seq(100,250)))
+    (3, "Valdis Saulespurens", 2, Seq(100,250)),
+    (4, "Victoria Beckham", 42, Seq(100,250)) //42 does not correspond to any school at a time in our graduatePrograms table
+  )
     .toDF("id", "name", "graduate_program", "spark_status")
 
   val graduateProgram = Seq(
     (0, "Masters", "School of Information", "UC Berkeley"),
     (2, "Masters", "EECS", "UC Berkeley"),
-    (1, "Ph.D.", "EECS", "UC Berkeley"))
+    (1, "Ph.D.", "EECS", "UC Berkeley"),
+    (3, "Masters", "EECS", "University of Latvia"),
+  )
     .toDF("id", "degree", "department", "school")
+
   val sparkStatus = Seq(
     (500, "Vice President"),
     (250, "PMC Member"),
@@ -97,5 +102,27 @@ object Day30Joins extends App {
 
   //in other words I want to see the purchases of these customers with their full names
   //try to show it both spark API and spark SQL
+
+  //We can also specify this explicitly by passing in a third parameter, the joinType:
+
+  //again no need to pass inner since it is the default
+  person.join(graduateProgram, joinExpression, joinType = "inner").show()
+
+  //Outer Joins
+  //Outer joins evaluate the keys in both of the DataFrames or tables and includes (and joins
+  //together) the rows that evaluate to true or false. If there is no equivalent row in either the left or
+  //right DataFrame, Spark will insert null
+
+  person.join(graduateProgram, joinExpression, "outer").show()
+
+  spark.sql(
+    """
+      |SELECT * FROM person
+      |FULL OUTER JOIN graduateProgram
+      |ON person.graduate_program = graduateProgram.id
+      |""".stripMargin)
+    .show()
+
+  //so we should see some null values in an FULL OUTER JOIN
 
 }
