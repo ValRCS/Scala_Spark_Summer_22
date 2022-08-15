@@ -26,15 +26,22 @@ object Day31Parquet extends App {
   //inference needed).
   //Here are some simple examples reading from parquet:
 
-  val df = spark.read.format("parquet")
+  val df = spark
+    .read
+//    .format("parquet") //so since parquet is the default format it is not required
 //    .load("src/resources/flight-data/parquet/2010-summary.parquet")
     //version mismatch generates warnings - creator metadata not preserved
     //https://stackoverflow.com/questions/42320157/warnings-trying-to-read-spark-1-6-x-parquet-into-spark-2-x
-    .load("src/resources/flight-data/parquet/2010-summary_fixed.parquet")
+//    .load("src/resources/flight-data/parquet/2010-summary_fixed.parquet")
+//    .load("src/resources/regression")
+    .parquet("src/resources/regression")
 
-  df.show(5)
+  df.show(25)
   df.describe().show()
   df.printSchema()
+
+  val dfSchema = df.schema //if we need the schema for some other time
+  println(dfSchema)
 
 //so we will save using our current parquet standard, we read from the old one with some warnings
 //  df.write
@@ -48,5 +55,29 @@ object Day31Parquet extends App {
   //TODO show some basic statistics - describe would be a good start
   //TODO if you encounter warning reading data THEN save into src/resources/regression_fixed
 
-  //
+
+
+  //ORC Files
+  //ORC is a self-describing, type-aware columnar file format designed for Hadoop workloads. It is
+  //optimized for large streaming reads, but with integrated support for finding required rows
+  //quickly. ORC actually has no options for reading in data because Spark understands the file
+  //format quite well. An often-asked question is: What is the difference between ORC and Parquet?
+  //For the most part, they’re quite similar; the fundamental difference is that Parquet is further
+  //optimized for use with Spark, whereas ORC is further optimized for Hive.
+
+  spark.read
+    .format("orc")
+    .load("src/resources/flight-data/orc/2010-summary.orc")
+    .show(5)
+
+  //Writing Orc Files
+  //At this point in the chapter, you should feel pretty comfortable taking a guess at how to write
+  //ORC files. It really follows the exact same pattern that we have seen so far, in which we specify
+  //the format and then save the file:
+  df.write
+    .format("orc")
+    .mode("overwrite")
+    .save("src/resources/tmp/my-json-file.orc")
+
+
 }
