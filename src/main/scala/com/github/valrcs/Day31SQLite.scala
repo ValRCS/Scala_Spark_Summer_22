@@ -105,6 +105,62 @@ AS flight_info"""
     .jdbc(newPath, tablename, props)
 
   //TODO how would you add extra tables to already existing SQL database - probably involves append
+//documentation is here:
+  //https://spark.apache.org/docs/latest/sql-data-sources-jdbc.html
+
+  //Text Files
+  //Spark also allows you to read in plain-text files. Each line in the file becomes a record in the
+  //DataFrame. It is then up to you to transform it accordingly. As an example of how you would do
+  //this, suppose that you need to parse some Apache log files to some more structured format, or
+  //perhaps you want to parse some plain text for natural-language processing. Text files make a
+  //great argument for the Dataset API due to its ability to take advantage of the flexibility of native
+  //types.
+
+  //Reading Text Files
+  //Reading text files is straightforward: you simply specify the type to be textFile. With
+  //textFile, partitioned directory names are ignored. To read and write text files according to
+  //partitions, you should use text, which respects partitioning on reading and writing
+
+  spark.read
+    .textFile("src/resources/flight-data/csv/2010-summary.csv") //csv is technically a text file
+    //by default each row will have a value column with string for that row
+//    .selectExpr("split(value, ',') as rows")
+    .show(15)
+
+  //so it is just rows of strings - it is up to us to transform them
+
+  val dfFromText =   spark.read
+    .textFile("src/resources/flight-data/csv/2010-summary.csv") //csv is technically a text file
+    .selectExpr("split(value, ',') as rows")
+
+  dfFromText.show(5)
+  dfFromText.printSchema()
+
+  //again reading .csv should be done with csv fromat
+
+  //reading text should be reserved for those times when we do not have well structured data
+
+  //Writing Text Files
+  //When you write a text file, you need to be sure to have only one string column; otherwise, the
+  //write will fail:
+
+  dbDataFrame.select("ORIGIN_COUNTRY_NAME") //we select a single string column
+    .write
+    .text("src/resources/tmp/simple-text-file.txt")
+
+
+  //Advanced I/O Concepts
+  //We saw previously that we can control the parallelism of files that we write by controlling the
+  //partitions prior to writing. We can also control specific data layout by controlling two things:
+  //bucketing and partitioning (discussed momentarily).
+  //Splittable File Types and Compression
+  //Certain file formats are fundamentally “splittable.” This can improve speed because it makes it
+  //possible for Spark to avoid reading an entire file, and access only the parts of the file necessary
+  //to satisfy your query. Additionally if you’re using something like Hadoop Distributed File
+  //System (HDFS), splitting a file can provide further optimization if that file spans multiple
+  //blocks. In conjunction with this is a need to manage compression. Not all compression schemes
+  //are splittable. How you store your data is of immense consequence when it comes to making
+  //your Spark jobs run smoothly. We recommend Parquet with gzip compression.
 
 
 }
