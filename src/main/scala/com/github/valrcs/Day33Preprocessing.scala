@@ -137,6 +137,10 @@ object Day33Preprocessing extends App {
 
     //TODO Read text from url
     //https://www.gutenberg.org/files/11/11-0.txt - Alice in Wonderland
+    //https://stackoverflow.com/questions/44961433/process-csv-from-rest-api-into-spark
+    //above link shows how to read csv file from url
+    //you can adopt it to read a simple text file directly as well
+
     //alternative download and read from file locally
     //TODO create a DataFrame with a single column called text which contains above book line by line
 
