@@ -119,7 +119,7 @@ object Day32PipelineExample extends App {
   val tvsFitted = tvs.fit(train) //so this will actually do the work of fitting/making the best model
 
   //And of course evaluate how it performs on the test set!
-  evaluator.evaluate(tvsFitted.transform(test))
+  println("Test Evaluation", evaluator.evaluate(tvsFitted.transform(test)))
 
 //We can also see a training summary for some models. To do this we extract it from the pipeline,
   //cast it to the proper type, and print our results. The metrics available on each model are discussed

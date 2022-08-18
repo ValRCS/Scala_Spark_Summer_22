@@ -14,7 +14,7 @@ object Day18SparkSQL extends App {
   println(s"Reading CSVs with Scala version: ${util.Properties.versionNumberString}")
 
   val spark = SparkSession.builder().appName("test").master("local").getOrCreate()
-//  spark.sparkContext.setLogLevel("WARN") //if you did not have log4j.xml set up in src/main/resources
+//  spark.sparkContext.setLogLevel("WARN") //if you did not have log4j.xml.bak set up in src/main/resources
   //problem with above approach is that it would still spew all the initial configuration debeg info
   println(s"Session started on Spark version ${spark.version}")
 

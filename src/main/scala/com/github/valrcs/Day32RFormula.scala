@@ -8,6 +8,7 @@ object Day32RFormula extends App {
   //https://spark.apache.org/docs/latest/ml-features.html#rformula
 
   val spark = getSpark("sparky")
+  spark.sparkContext.setLogLevel("WARN")
 
   val dataset = spark.createDataFrame(Seq(
     (7, "US", 18, 1.0),
