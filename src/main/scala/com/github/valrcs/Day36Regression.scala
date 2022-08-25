@@ -3,7 +3,8 @@ package com.github.valrcs
 import com.github.valrcs.SparkUtil.getSpark
 import org.apache.spark.ml.feature.RFormula
 import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.ml.regression.{DecisionTreeRegressor, LinearRegression}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.expr
 
 object Day36Regression extends App {
@@ -113,6 +114,128 @@ object Day36Regression extends App {
 
   //TODO make a prediction if values or x1, x2 and x3 are respectively 100, 50, 1000
 
+  //open "src/resources/csv/range3d"
+  val myDF = spark.read
+    .format("csv")
+    .option("header", value = true)
+    .option("inferSchema", value = true)
+    .load("src/resources/csv/range3d")
 
+  //Transform x1,x2,x3 into features(you cna use VectorAssembler or RFormula), y can stay, or you can use label/value column
+
+  val myRFormula = new RFormula()
+    .setFormula("y ~ .")
+    .setLabelCol("value")
+    .setFeaturesCol("features")
+
+  val myNewDF = rFormula
+    .fit(myDF)
+    .transform(myDF)
+
+  myNewDF.show(10)
+
+  //create  a Linear Regression model, fit it to our 3d data
+
+  val myLinReg = new LinearRegression()
+    .setLabelCol("value")
+
+  val myLRModel = myLinReg.fit(myNewDF)
+
+  val mySummary = myLRModel.summary
+  mySummary.residuals.show(10)
+
+  //print out intercept
+//  val myIntercept = myLRModel.intercept //this is our b
+//  val myCoefficient = myLRModel.coefficients(0) //we only have 1 features so first one (a)
+
+  val intercept2 = myLRModel.intercept
+  val coefficient2 = myLRModel.coefficients
+  val x1 = coefficient2(0)
+  val x2 = coefficient2(1)
+  val x3 = coefficient2(2)
+
+  //TODO print out all 3 coefficients
+  println(s"Intercept is $intercept2 and coefficients are $x1, $x2, $x3")
+
+//  println(s"My intercept is $intercept and coefficient is $coefficient")
+
+  //print out all 3 coefficients
+
+  val myPredictDF = myLRModel.transform(myNewDF)
+    .withColumn("residuals", expr("value - prediction"))
+  myPredictDF.show(10, truncate = false)
+
+
+  //make a prediction if values of x1, x2 and x3 are respectively 100, 50, 1000
+  println(myLRModel.predict(Vectors.dense(100, 50, 1000)))
+  //so I am providing a sparse array where the middle (2nd value with index 1 is missing)
+  println(myLRModel.predict(Vectors.sparse(3,indices=Array(0,2), values = Array(10.0, 30.0))))
+  //this should provide the same answer as the sparse, since the data are the same
+  println(myLRModel.predict(Vectors.dense(10.0, 0.0, 30.0 )))
+
+  def testLinearRegression(lr:LinearRegression, df:DataFrame):Unit = {
+    val model = lr.fit(df)
+    val intercept = model.intercept
+    val coefficient = model.coefficients
+    val x1 = coefficient(0)
+    val x2 = coefficient(1)
+    val x3 = coefficient(2)
+
+    //TODO print out all 3 coefficients
+    println(s"Intercept is $intercept and coefficients are $x1, $x2, $x3")
+
+    val summary = model.summary
+    println("meanAbsoluteErr", summary.meanAbsoluteError, "MSE", summary.meanSquaredError)
+    import spark.implicits._ //to make going from regular Seq toDF method available
+//    println(summary.objectiveHistory.toSeq.toDF.show())
+    println(summary.objectiveHistory.mkString(","))
+  }
+
+  //so let's test our regParameter
+  for (v <- Array(0.0, 0.2,0.5,0.7, 1.0)) {
+    val lr = new LinearRegression()
+      .setRegParam(v)
+      .setMaxIter(10)
+//      .setLoss() //you can change this squared error to something else
+      .setLabelCol("y") //value would also work
+    testLinearRegression(lr, myNewDF)
+  }
+
+
+  val Array(train,test) = ndf.randomSplit(Array(0.75, 0.25))
+
+  //turns out there are Decision Tree Regressors not only Classifiers
+
+  val dt = new DecisionTreeRegressor()
+  .setLabelCol("y")
+  .setFeaturesCol("features") //we can change our hyperparameters
+
+  val dtModel = dt.fit(train)
+
+  val dtPrediction = dtModel.transform(test)
+
+  println(dtModel.toDebugString)
+
+  dtPrediction.show(20, false)
+
+  //so decision tree regression will not perform well outside the range of features used for training
+  println(dtModel.predict(Vectors.dense(2000))) //so 399 no matter how large
+  println(dtModel.predict(Vectors.dense(-2000))) //so 13.148 no matter how small
+
+  //to explore on your own would be Isotonic Regression
+  //performs well when x and y values and going up and to the right
+
+  //Isotonic Regression
+  //Isotonic regression is another specialized regression model, with some unique requirements.
+  //Essentially, isotonic regression specifies a piecewise linear function that is always monotonically
+  //increasing. It cannot decrease. This means that if your data is going up and to the right in a given
+  //plot, this is an appropriate model. If it varies over the course of input values, then this is not
+  //appropriate.
+  //The illustration of isotonic regression’s behavior in Figure 27-1 makes it much easier to
+  //understand
+
+  //another interesting regressor would be
+
+  //https://spark.apache.org/docs/latest/ml-classification-regression.html#factorization-machines-regressor
 
 }

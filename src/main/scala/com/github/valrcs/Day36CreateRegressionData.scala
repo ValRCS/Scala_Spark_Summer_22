@@ -35,12 +35,23 @@ object Day36CreateRegressionData extends App {
 
   df3d.show(5, false)
 
-  df3d.write
-    .format("csv")
-    .option("path", "src/resources/csv/range3d")
-    .option("header", true)
-    .mode("overwrite")
-    .save
+//  df3d.write
+//    .format("csv")
+//    .option("path", "src/resources/csv/range3d")
+//    .option("header", true)
+//    .mode("overwrite")
+//    .save
+
+
+  //TODO condidtional expressions in spark SQL
+//  val dfNonLin = spark
+//    .range(100)
+//    .toDF()
+//    .withColumnRenamed("id", "x")
+//    .withColumn("y", expr("WHEN x < 50 THEN 20 ELSE 70")) //so our linear formula has some noise
+//  //so our formula ix f(x) = 4x+5+some random noise from -0.5 to 0.5
+//
+//  dfNonLin.show(10, false)
 
 
 }
