@@ -19,13 +19,28 @@ object Day36CreateRegressionData extends App {
 
   df.show(10, false)
 
-  df.write
+//  df.write
+//    .format("csv")
+//    .option("path", dst)
+//    .option("header", true)
+//    .mode("overwrite")
+//    .save
+
+  val df3d = spark.range(100)
+    .toDF()
+    .withColumnRenamed("id", "x1")
+    .withColumn("x2", expr("x1 + 30"))
+    .withColumn("x3", expr("x1 - 20"))
+    .withColumn("y", expr("round(50 + x1 * 2 + x2 * 3 + x3 * 5 + rand()*2-1, 4)"))
+
+  df3d.show(5, false)
+
+  df3d.write
     .format("csv")
-    .option("path", dst)
+    .option("path", "src/resources/csv/range3d")
     .option("header", true)
     .mode("overwrite")
     .save
-
 
 
 }
