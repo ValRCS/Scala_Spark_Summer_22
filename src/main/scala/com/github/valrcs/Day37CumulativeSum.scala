@@ -1,7 +1,7 @@
 package com.github.valrcs
 
 import com.github.valrcs.SparkUtil.{getSpark, readDataWithView}
-import org.apache.spark.sql.functions.{expr, monotonically_increasing_id}
+import org.apache.spark.sql.functions.{expr, monotonically_increasing_id, round}
 
 object Day37CumulativeSum extends App {
   val spark = getSpark("SparkY")
@@ -32,10 +32,19 @@ object Day37CumulativeSum extends App {
       |UNBOUNDED PRECEDING AND
       |CURRENT ROW) as SUMFRUIT
       |FROM dfTable
+      |ORDER BY id ASC
       |""".stripMargin)
   //so our sum is over default ordering an no partitions
   sumDF.show(false)
 
-  //TODO do the same using spark function, also check ROUND function
+  //TODO do the same using spark functions, also check ROUND function
+  //you can use WindowSPe see Day 29
 
+  val sumRounder = sumDF
+    .withColumn("SUMFRUIT", expr("ROUND(`SUMFRUIT`, 2)"))
+  //you could do same with round(col functions as well
+  //so we had to use backticks for column names, same syntax should work above
+  //I overwrite the old SUMFRUIT
+
+  sumRounder.show()
 }
