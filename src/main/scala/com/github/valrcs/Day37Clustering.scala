@@ -137,6 +137,15 @@ object Day37Clustering extends App {
   //here we see that silhouette score worked out perfectly as the max was indeed the best clustering number for kmeans
   //with real data you might need to play around with a couple of highest scores - remembering about elbow method
 
-
+  clusteredDF
+    .repartition(10) //so see if this solves the memory issue it will save in 10 partitions
+    .drop("features") //i could of course use select everything but features instead
+    //i could also cast features as string
+    .write
+//    .format("parquet") //for csv i would need to cast features column to string
+    .format("csv")
+    .option("header", "true")
+    .mode("overwrite") //same as option("mode", "overwrite")
+    .save("src/resources/csv/clusteredAnswers.csv")
 
 }
