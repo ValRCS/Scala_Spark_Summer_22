@@ -138,6 +138,8 @@ object Day37Clustering extends App {
   //with real data you might need to play around with a couple of highest scores - remembering about elbow method
 
   clusteredDF
+    //you might also repartition down, you may not want 200 partitions either
+    //here we are repartitioning from 1 to 10
     .repartition(10) //so see if this solves the memory issue it will save in 10 partitions
     .drop("features") //i could of course use select everything but features instead
     //i could also cast features as string
